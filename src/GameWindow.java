@@ -4,6 +4,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -11,13 +12,23 @@ import java.io.IOException;
  * Created by huynq on 2/19/17.
  */
 public class GameWindow extends Frame {
+    private static final int SPEED = 20;
+    private static final int SCREEN_WIDTH = 400;
+    private static final int SCREEN_HEIGHT = 600;
+
+    private BufferedImage backBufferImage;
+    private Graphics backGraphics;
+
     Image backgroundImage;
     Image planeImage;
     private int planeX = (400 - 35) / 2;
+    private int planeY = 600 - 25;
+
+    Thread thread;
 
     public GameWindow() {
         setVisible(true);
-        setSize(400, 600);
+        setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -50,11 +61,15 @@ public class GameWindow extends Frame {
             @Override
             public void keyPressed(KeyEvent e) {
                 super.keyPressed(e);
+                int keyCode = e.getKeyCode();
                 if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                    // TODO: move plane to right
-                    planeX += 10;
-                    repaint();
-                    System.out.println("keyPressed");
+                    planeX += SPEED;
+                } else if (keyCode == KeyEvent.VK_LEFT) {
+                    planeX -= SPEED;
+                } else if (keyCode == KeyEvent.VK_UP) {
+                    planeY -= SPEED;
+                } else if (keyCode == KeyEvent.VK_DOWN) {
+                    planeY += SPEED;
                 }
             }
 
@@ -63,6 +78,30 @@ public class GameWindow extends Frame {
                 super.keyReleased(e);
             }
         });
+
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true) {
+                    try {
+                        Thread.sleep(17);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    repaint();
+                }
+            }
+        });
+
+
+        backBufferImage = new BufferedImage(
+                SCREEN_WIDTH,
+                SCREEN_HEIGHT,
+                BufferedImage.TYPE_INT_ARGB);
+
+        backGraphics = backBufferImage.getGraphics();
+
+        thread.start();
     }
 
     private Image loadImageFromRes(String url) {
@@ -77,7 +116,14 @@ public class GameWindow extends Frame {
 
     @Override
     public void update(Graphics g) {
-        g.drawImage(backgroundImage, 0, 0, 400, 600, null);
-        g.drawImage(planeImage, planeX, 600 - 25, 35, 25, null);
+        if (backBufferImage != null) {
+
+
+
+            backGraphics.drawImage(backgroundImage, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
+            backGraphics.drawImage(planeImage, planeX, planeY, 35, 25, null);
+
+            g.drawImage(backBufferImage, 0, 0, null);
+        }
     }
 }
