@@ -6,5 +6,6 @@ public class Program {
     public static void main(String[] args) {
         System.out.println("Hello Android8");
         GameWindow gameWindow = new GameWindow();
+        System.out.printf("xx");
     }
 }

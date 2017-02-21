@@ -21,10 +21,16 @@ public class GameWindow extends Frame {
 
     Image backgroundImage;
     Image planeImage;
-    private int planeX = (400 - 35) / 2;
-    private int planeY = 600 - 25;
+    Image enemyImage;
+    private int planeX = (SCREEN_WIDTH - 35) / 2;
+    private int planeY = SCREEN_HEIGHT - 25;
+
+    int enemyX = SCREEN_WIDTH / 2;
+    int enemyY = 0;
 
     Thread thread;
+
+    PlayerBullet playerBullet;
 
     public GameWindow() {
         setVisible(true);
@@ -48,6 +54,9 @@ public class GameWindow extends Frame {
         // 1: Load image
         backgroundImage = loadImageFromRes("background.png");
         planeImage = loadImageFromRes("plane3.png");
+        enemyImage = loadImageFromRes("plane1.png");
+
+
 
         // 2: Draw image
         repaint();
@@ -70,6 +79,11 @@ public class GameWindow extends Frame {
                     planeY -= SPEED;
                 } else if (keyCode == KeyEvent.VK_DOWN) {
                     planeY += SPEED;
+                } else if (keyCode == KeyEvent.VK_SPACE) {
+                    playerBullet = new PlayerBullet();
+                    playerBullet.image = loadImageFromRes("bullet.png");
+                    playerBullet.x = planeX;
+                    playerBullet.y = planeY;
                 }
             }
 
@@ -89,6 +103,10 @@ public class GameWindow extends Frame {
                         e.printStackTrace();
                     }
                     repaint();
+
+                    enemyY += 1;
+                    if (playerBullet != null)
+                        playerBullet.y -= 1;
                 }
             }
         });
@@ -118,10 +136,11 @@ public class GameWindow extends Frame {
     public void update(Graphics g) {
         if (backBufferImage != null) {
 
-
-
             backGraphics.drawImage(backgroundImage, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
             backGraphics.drawImage(planeImage, planeX, planeY, 35, 25, null);
+            backGraphics.drawImage(enemyImage, enemyX, enemyY, 35, 30, null);
+            if (playerBullet != null)
+                backGraphics.drawImage(playerBullet.image, playerBullet.x, playerBullet.y, 13, 30, null);
 
             g.drawImage(backBufferImage, 0, 0, null);
         }
