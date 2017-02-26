@@ -7,5 +7,9 @@ public class PlayerBullet {
     public Image image;
     public int x;
     public int y;
-    public int speed;
+    public static final int SPEED = 5;
+
+    public void run() {
+        y -= SPEED;
+    }
 }

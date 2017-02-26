@@ -1,12 +1,21 @@
-import javax.imageio.ImageIO;
+import controllers.PlayerBulletController;
+import models.PlayerBulletModel;
+import utils.Utils;
+import views.PlayerBulletView;
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+
+//struct
+
+// Plane
+// x, y, image, speed, width, height
+// move, shot
 
 /**
  * Created by huynq on 2/19/17.
@@ -20,17 +29,19 @@ public class GameWindow extends Frame {
     private Graphics backGraphics;
 
     Image backgroundImage;
-    Image planeImage;
+
     Image enemyImage;
-    private int planeX = (SCREEN_WIDTH - 35) / 2;
-    private int planeY = SCREEN_HEIGHT - 25;
 
     int enemyX = SCREEN_WIDTH / 2;
     int enemyY = 0;
 
     Thread thread;
 
-    PlayerBullet playerBullet;
+    ArrayList<PlayerBullet> playerBullets = new ArrayList<>();
+
+    PlayerPlane plane;
+
+    PlayerBulletController playerBulletController;
 
     public GameWindow() {
         setVisible(true);
@@ -51,11 +62,20 @@ public class GameWindow extends Frame {
             }
         });
 
-        // 1: Load image
-        backgroundImage = loadImageFromRes("background.png");
-        planeImage = loadImageFromRes("plane3.png");
-        enemyImage = loadImageFromRes("plane1.png");
+        playerBulletController = new PlayerBulletController(300, 300);
 
+        plane = new PlayerPlane(
+                (SCREEN_WIDTH - 35) / 2,
+                SCREEN_HEIGHT - 25,
+                Utils.loadImageFromRes("plane3.png"),
+                35,
+                30
+        );
+
+
+        // 1: Load image
+        backgroundImage = Utils.loadImageFromRes("background.png");
+        enemyImage = Utils.loadImageFromRes("plane1.png");
 
 
         // 2: Draw image
@@ -72,18 +92,21 @@ public class GameWindow extends Frame {
                 super.keyPressed(e);
                 int keyCode = e.getKeyCode();
                 if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                    planeX += SPEED;
+                    plane.moveRight();
                 } else if (keyCode == KeyEvent.VK_LEFT) {
-                    planeX -= SPEED;
+                    plane.moveLeft();
                 } else if (keyCode == KeyEvent.VK_UP) {
-                    planeY -= SPEED;
+                    plane.moveUp();
                 } else if (keyCode == KeyEvent.VK_DOWN) {
-                    planeY += SPEED;
+                    plane.moveDown();
                 } else if (keyCode == KeyEvent.VK_SPACE) {
-                    playerBullet = new PlayerBullet();
-                    playerBullet.image = loadImageFromRes("bullet.png");
-                    playerBullet.x = planeX;
-                    playerBullet.y = planeY;
+                    PlayerBullet playerBullet = new PlayerBullet();
+                    playerBullet.image = Utils.loadImageFromRes("bullet.png");
+
+                    playerBullet.x = plane.getX();
+                    playerBullet.y = plane.getY();
+
+                    playerBullets.add(playerBullet);
                 }
             }
 
@@ -96,7 +119,7 @@ public class GameWindow extends Frame {
         thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true) {
+                while (true) {
                     try {
                         Thread.sleep(17);
                     } catch (InterruptedException e) {
@@ -105,12 +128,17 @@ public class GameWindow extends Frame {
                     repaint();
 
                     enemyY += 1;
-                    if (playerBullet != null)
-                        playerBullet.y -= 1;
+
+                    playerBulletController.run();
+
+                    for (PlayerBullet playerBullet : playerBullets) {
+                        playerBullet.run();
+                    }
+
+                    plane.run();
                 }
             }
         });
-
 
         backBufferImage = new BufferedImage(
                 SCREEN_WIDTH,
@@ -122,25 +150,20 @@ public class GameWindow extends Frame {
         thread.start();
     }
 
-    private Image loadImageFromRes(String url) {
-        try {
-            Image image = ImageIO.read(new File("resources/" + url));
-            return image;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     @Override
     public void update(Graphics g) {
         if (backBufferImage != null) {
 
             backGraphics.drawImage(backgroundImage, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
-            backGraphics.drawImage(planeImage, planeX, planeY, 35, 25, null);
+            plane.draw(backGraphics);
             backGraphics.drawImage(enemyImage, enemyX, enemyY, 35, 30, null);
-            if (playerBullet != null)
+
+            playerBulletController.draw(backGraphics);
+
+            for (PlayerBullet playerBullet : playerBullets) {
                 backGraphics.drawImage(playerBullet.image, playerBullet.x, playerBullet.y, 13, 30, null);
+            }
 
             g.drawImage(backBufferImage, 0, 0, null);
         }
