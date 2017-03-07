@@ -1,7 +1,9 @@
-import controllers.PlayerBulletController;
-import models.PlayerBulletModel;
+import controllers.ControllerManager;
+import controllers.EnemyControllerManager;
+import controllers.PlayerPlaneController;
+import models.GameModel;
 import utils.Utils;
-import views.PlayerBulletView;
+import views.GameView;
 
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -9,7 +11,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 
 //struct
 
@@ -30,20 +31,17 @@ public class GameWindow extends Frame {
 
     Image backgroundImage;
 
-    Image enemyImage;
-
-    int enemyX = SCREEN_WIDTH / 2;
-    int enemyY = 0;
-
     Thread thread;
 
-    ArrayList<PlayerBullet> playerBullets = new ArrayList<>();
+    ControllerManager playerBulletControllerManager;
+    PlayerPlaneController playerPlaneController;
+    ControllerManager enemyControllerManager;
 
-    PlayerPlane plane;
-
-    PlayerBulletController playerBulletController;
 
     public GameWindow() {
+
+        setUpControllers();
+
         setVisible(true);
         setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -62,20 +60,10 @@ public class GameWindow extends Frame {
             }
         });
 
-        playerBulletController = new PlayerBulletController(300, 300);
-
-        plane = new PlayerPlane(
-                (SCREEN_WIDTH - 35) / 2,
-                SCREEN_HEIGHT - 25,
-                Utils.loadImageFromRes("plane3.png"),
-                35,
-                30
-        );
-
 
         // 1: Load image
         backgroundImage = Utils.loadImageFromRes("background.png");
-        enemyImage = Utils.loadImageFromRes("plane1.png");
+
 
 
         // 2: Draw image
@@ -91,22 +79,17 @@ public class GameWindow extends Frame {
             public void keyPressed(KeyEvent e) {
                 super.keyPressed(e);
                 int keyCode = e.getKeyCode();
+
                 if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                    plane.moveRight();
+                    playerPlaneController.moveRight();
                 } else if (keyCode == KeyEvent.VK_LEFT) {
-                    plane.moveLeft();
+                    playerPlaneController.moveLeft();
                 } else if (keyCode == KeyEvent.VK_UP) {
-                    plane.moveUp();
+                    playerPlaneController.moveUp();
                 } else if (keyCode == KeyEvent.VK_DOWN) {
-                    plane.moveDown();
+                    playerPlaneController.moveDown();
                 } else if (keyCode == KeyEvent.VK_SPACE) {
-                    PlayerBullet playerBullet = new PlayerBullet();
-                    playerBullet.image = Utils.loadImageFromRes("bullet.png");
-
-                    playerBullet.x = plane.getX();
-                    playerBullet.y = plane.getY();
-
-                    playerBullets.add(playerBullet);
+                    playerPlaneController.shoot();
                 }
             }
 
@@ -127,15 +110,10 @@ public class GameWindow extends Frame {
                     }
                     repaint();
 
-                    enemyY += 1;
 
-                    playerBulletController.run();
-
-                    for (PlayerBullet playerBullet : playerBullets) {
-                        playerBullet.run();
-                    }
-
-                    plane.run();
+                    enemyControllerManager.run();
+                    enemyControllerManager.run();
+                    playerPlaneController.run();
                 }
             }
         });
@@ -150,20 +128,22 @@ public class GameWindow extends Frame {
         thread.start();
     }
 
+    private void setUpControllers() {
+        enemyControllerManager = new EnemyControllerManager();
+        playerPlaneController = new PlayerPlaneController(
+                new GameView("plane3.png"),
+                new GameModel(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 10, 70, 50),
+                playerBulletControllerManager
+        );
+    }
 
     @Override
     public void update(Graphics g) {
         if (backBufferImage != null) {
 
             backGraphics.drawImage(backgroundImage, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
-            plane.draw(backGraphics);
-            backGraphics.drawImage(enemyImage, enemyX, enemyY, 35, 30, null);
-
-            playerBulletController.draw(backGraphics);
-
-            for (PlayerBullet playerBullet : playerBullets) {
-                backGraphics.drawImage(playerBullet.image, playerBullet.x, playerBullet.y, 13, 30, null);
-            }
+            playerPlaneController.draw(backGraphics);
+            enemyControllerManager.draw(backGraphics);
 
             g.drawImage(backBufferImage, 0, 0, null);
         }

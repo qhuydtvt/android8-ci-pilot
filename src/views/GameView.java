@@ -1,6 +1,7 @@
 package views;
 
 import models.GameModel;
+import utils.Utils;
 
 import java.awt.*;
 
@@ -13,6 +14,10 @@ public class GameView {
 
     public GameView(Image image) {
         this.image = image;
+    }
+
+    public GameView(String url) {
+        this(Utils.loadImageFromRes(url));
     }
 
     public void draw(Graphics graphics, GameModel model) {

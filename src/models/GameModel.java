@@ -1,5 +1,7 @@
 package models;
 
+import java.awt.*;
+
 /**
  * Created by huynq on 2/28/17.
  */
@@ -9,6 +11,7 @@ public class GameModel {
     protected int y;
     protected int width;
     protected int height;
+    protected boolean isAlive = true;
 
     public GameModel(int x, int y, int width, int height) {
         this.x = x;
@@ -20,6 +23,12 @@ public class GameModel {
     public void move(int dx, int dy) {
         x += dx;
         y += dy;
+    }
+
+    public boolean checkContact(GameModel otherGameModel) {
+        Rectangle r1 = new Rectangle(x, y, width, height);
+        Rectangle r2 = new Rectangle(otherGameModel.x, otherGameModel.y, otherGameModel.width, otherGameModel.height);
+        return r1.intersects(r2);
     }
 
     public int getX() {
@@ -52,5 +61,13 @@ public class GameModel {
 
     public void setHeight(int height) {
         this.height = height;
+    }
+
+    public double getMidX() {
+        return x + (double)width / 2;
+    }
+
+    public boolean isAlive() {
+        return isAlive;
     }
 }
